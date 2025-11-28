@@ -7,10 +7,16 @@
     "runsOn": "GPU",
     "containerDiskInGb": 50,
     "gpuCount": 1,
+    "gpuIds": "NVIDIA RTX A5000,NVIDIA RTX 4090,NVIDIA A40",
+    "allowedCudaVersions": [
+      "12.8", "12.7", "12.6", "12.5", "12.4",
+      "12.3", "12.2", "12.1", "12.0"
+    ],
     "env": [
       {
         "key": "PROMPT",
         "input": {
+          "name": "Prompt",
           "type": "string",
           "description": "Text prompt for image generation",
           "default": "A vibrant neon-lit street scene in Hong Kong"
@@ -19,6 +25,7 @@
       {
         "key": "SEED",
         "input": {
+          "name": "Seed",
           "type": "number",
           "description": "Random seed for generation (use -1 for random)",
           "default": -1
@@ -27,6 +34,7 @@
       {
         "key": "WIDTH",
         "input": {
+          "name": "Width",
           "type": "number",
           "description": "Image width in pixels",
           "default": 1328,
@@ -37,6 +45,7 @@
       {
         "key": "HEIGHT",
         "input": {
+          "name": "Height",
           "type": "number",
           "description": "Image height in pixels",
           "default": 1328,
@@ -47,6 +56,7 @@
       {
         "key": "STEPS",
         "input": {
+          "name": "Steps",
           "type": "number",
           "description": "Number of generation steps (fixed at 8 for speed)",
           "default": 8,
@@ -57,9 +67,11 @@
       {
         "key": "CUSTOM_WORKFLOW",
         "input": {
+          "name": "Custom Workflow",
           "type": "string",
           "description": "Optional: Complete ComfyUI workflow JSON to override all other settings",
-          "default": ""
+          "default": "",
+          "advanced": true
         }
       }
     ]
