@@ -75,7 +75,8 @@
       },
       "37": {
         "inputs": {
-          "filename": "qwen_image_fp8_e4m3fn.safetensors"
+          "unet_name": "qwen_image_fp8_e4m3fn.safetensors",
+          "weight_dtype": "fp8_e4m3fn"
         },
         "class_type": "UNETLoader",
         "_meta": {
@@ -84,7 +85,8 @@
       },
       "38": {
         "inputs": {
-          "filename": "qwen_2.5_vl_7b_fp8_scaled.safetensors"
+          "type": "qwen_image",
+          "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors"
         },
         "class_type": "CLIPLoader",
         "_meta": {
@@ -93,7 +95,7 @@
       },
       "39": {
         "inputs": {
-          "filename": "qwen_image_vae.safetensors"
+          "vae_name": "qwen_image_vae.safetensors"
         },
         "class_type": "VAELoader",
         "_meta": {
@@ -126,7 +128,7 @@
       },
       "66": {
         "inputs": {
-          "value": 3.1000000000000005,
+          "shift": 3.1,
           "model": [
             "73",
             0
@@ -139,11 +141,12 @@
       },
       "73": {
         "inputs": {
-          "filename": "Qwen-Image-Lightning-8steps-V1.0.safetensors",
+          "lora_name": "Qwen-Image-Lightning-8steps-V1.0.safetensors",
           "model": [
             "37",
             0
-          ]
+          ],
+          "strength_model": 1
         },
         "class_type": "LoraLoaderModelOnly",
         "_meta": {
