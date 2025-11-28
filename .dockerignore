@@ -1,0 +1,26 @@
+# Claude Code files
+CLAUDE.md
+.claude/
+
+# Development and documentation files
+HUB_SUBMISSION.md
+runpod.yml
+README.md
+LICENSE_COMPLIANCE.md
+
+# Examples and benchmarks (not needed in container)
+benchmarks/
+examples/
+
+# Git files
+.git/
+.gitignore
+
+# Duplicate/unused workflow files
+example-request2.json
+
+# Only keep essential files for container:
+# - Dockerfile
+# - handler.py (for serverless)
+# - example-request.json (for testing)
+# - .runpod/ (for Hub configuration)
