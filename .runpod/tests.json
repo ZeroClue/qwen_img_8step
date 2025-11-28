@@ -1,0 +1,168 @@
+{
+  "tests": [
+    {
+      "name": "health_check",
+      "description": "Validates that the ComfyUI service is responsive and system stats are available",
+      "test_type": "health",
+      "timeout": 30,
+      "endpoint": "/system_stats",
+      "method": "GET",
+      "assertions": {
+        "status_code": 200,
+        "response_time": {"max": 5.0}
+      }
+    },
+    {
+      "name": "performance_test",
+      "description": "Validates generation speed and resource usage meet specifications",
+      "test_type": "performance",
+      "timeout": 120,
+      "endpoint": "/prompt",
+      "method": "POST",
+      "payload_file": "example-request.json",
+      "expected_performance": {
+        "generation_time": {"max": 4.0},
+        "success_rate": {"min": 0.95},
+        "memory_usage": {"max": "16GB"}
+      }
+    },
+    {
+      "name": "quality_test_basic",
+      "description": "Validates output quality using diverse prompts",
+      "test_type": "quality",
+      "timeout": 180,
+      "endpoint": "/prompt",
+      "method": "POST",
+      "test_cases": [
+        {
+          "name": "landscape_test",
+          "prompt": "A serene mountain landscape at sunset with snow-capped peaks",
+          "expected_elements": ["mountains", "sunset", "snow"],
+          "min_clip_score": 0.25
+        },
+        {
+          "name": "urban_test",
+          "prompt": "A futuristic city with flying cars and neon lights",
+          "expected_elements": ["city", "cars", "neon"],
+          "min_clip_score": 0.25
+        },
+        {
+          "name": "cultural_test",
+          "prompt": "A traditional Japanese garden with cherry blossoms in spring",
+          "expected_elements": ["garden", "cherry blossoms", "japanese"],
+          "min_clip_score": 0.25
+        }
+      ],
+      "assertions": {
+        "generation_consistency": {"min": 0.90},
+        "average_clip_score": {"min": 0.25}
+      }
+    },
+    {
+      "name": "chinese_style_test",
+      "description": "Validates Chinese cultural elements and Hong Kong style generation",
+      "test_type": "cultural",
+      "timeout": 180,
+      "endpoint": "/prompt",
+      "method": "POST",
+      "test_cases": [
+        {
+          "name": "hong_kong_street",
+          "prompt": "A vibrant Hong Kong street with Chinese signs and lanterns",
+          "expected_elements": ["hong kong", "chinese signs", "lanterns"],
+          "min_clip_score": 0.25
+        },
+        {
+          "name": "neon_hong_kong",
+          "prompt": "A warm neon-lit street scene in Hong Kong with colorful Chinese and English signs",
+          "expected_elements": ["neon", "chinese signs", "hong kong"],
+          "min_clip_score": 0.25
+        }
+      ],
+      "assertions": {
+        "cultural_accuracy": {"min": 0.80}
+      }
+    },
+    {
+      "name": "workflow_integrity_test",
+      "description": "Validates the complete 8-step Lightning workflow functions correctly",
+      "test_type": "integration",
+      "timeout": 120,
+      "endpoint": "/prompt",
+      "method": "POST",
+      "payload_file": "example-request.json",
+      "validation": {
+        "workflow_steps": 8,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "cfg_scale": 1.0,
+        "resolution": "1328x1328",
+        "lora_strength": 3.1
+      },
+      "assertions": {
+        "workflow_completes": true,
+        "output_resolution": "1328x1328",
+        "image_generated": true
+      }
+    },
+    {
+      "name": "resource_efficiency_test",
+      "description": "Validates resource efficiency compared to standard 20-step models",
+      "test_type": "efficiency",
+      "timeout": 300,
+      "endpoint": "/prompt",
+      "method": "POST",
+      "concurrent_requests": 3,
+      "payload_file": "example-request.json",
+      "assertions": {
+        "memory_efficiency": {"min": 0.70},
+        "time_efficiency": {"min": 0.70},
+        "concurrent_success_rate": {"min": 0.90}
+      }
+    },
+    {
+      "name": "error_handling_test",
+      "description": "Validates graceful handling of malformed requests and edge cases",
+      "test_type": "robustness",
+      "timeout": 60,
+      "test_cases": [
+        {
+          "name": "invalid_json",
+          "description": "Test with malformed JSON payload",
+          "endpoint": "/prompt",
+          "method": "POST",
+          "payload": "invalid json",
+          "expected_status": 400
+        },
+        {
+          "name": "missing_workflow",
+          "description": "Test with missing workflow in payload",
+          "endpoint": "/prompt",
+          "method": "POST",
+          "payload": {"invalid": "structure"},
+          "expected_status": 400
+        }
+      ],
+      "assertions": {
+        "graceful_error_responses": true,
+        "service_remains_available": true
+      }
+    }
+  ],
+  "test_configuration": {
+    "setup_timeout": 300,
+    "teardown_timeout": 60,
+    "default_timeout": 120,
+    "retry_attempts": 3,
+    "parallel_execution": false,
+    "cleanup_between_tests": true
+  },
+  "performance_benchmarks": {
+    "target_generation_time": 4.0,
+    "target_success_rate": 0.95,
+    "target_memory_usage": "16GB",
+    "target_quality_score": 0.25,
+    "baseline_20_step_time": 15.0,
+    "expected_speedup": 3.75
+  }
+}
