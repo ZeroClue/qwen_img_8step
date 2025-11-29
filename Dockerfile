@@ -92,7 +92,7 @@ WORKDIR /comfyui
 #RUN /usr/local/bin/comfy-node-install
 
 # install custom nodes into comfyui
-RUN if [ -n "${COMFY_CUSTOM_NODES:-}" ]; then \
+RUN if [ -n "${COMFY_CUSTOM_NODES}" ]; then \
       echo "Installing custom ComfyUI nodes: ${COMFY_CUSTOM_NODES}" \
       /usr/local/bin/comfy-node-install ${COMFY_CUSTOM_NODES} \
     else \
@@ -123,7 +123,7 @@ WORKDIR /comfyui
 RUN mkdir -p models/checkpoints models/vae models/unet models/clip models/loras
 
 # Download checkpoints/vae/unet/clip/loras models to include in image based on model type
-RUN if [ "$MODEL_TYPE" = "fqwen_image_fp8" ]; then \
+RUN if [ "$MODEL_TYPE" = "qwen_image_fp8" ]; then \
       wget -q -O models/diffusion_models/qwen_image_fp8_e4m3fn.safetensors https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/diffusion_models/qwen_image_fp8_e4m3fn.safetensors && \
       wget -q -O models/clip/qwen_2.5_vl_7b_fp8_scaled.safetensors https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors && \
       wget -q -O models/vae/qwen_image_vae.safetensors https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/vae/qwen_image_vae.safetensors && \
