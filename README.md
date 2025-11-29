@@ -2,6 +2,11 @@
 
 🚀 **Ultra-fast AI image generation in just 8 steps** - Generate high-quality 1328×1328 images in 2-4 seconds using Qwen Vision-Language models with Lightning optimization.
 
+## 🎯 **Maximum Resolution: 4K Ultra HD**
+- **4K Quality**: Up to 4096×4096 pixels (17 megapixels)
+- **Flexible Resolutions**: Support from 512×512 up to 4K Ultra HD (4096×4096)
+- **Production Ready**: High-resolution output for professional use
+
 ## ⚡ Key Features
 
 - **8-Step Lightning Generation**: 3-6x faster than standard 20-50 step models
@@ -15,7 +20,7 @@
 | Metric | Value | Comparison |
 |--------|-------|------------|
 | Generation Time | 2-4 seconds | 5-15x faster than standard models |
-| Resolution | 1328×1328 pixels | High-resolution output |
+| Resolution | 1328×1328 pixels (default) | Up to 4096×4096 (4K) supported |
 | Memory Usage | ~16GB GPU | Efficient resource utilization |
 | Steps | 8 steps | Lightning LoRA optimization |
 | Quality Score | 85%+ | vs 20-step reference |
