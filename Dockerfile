@@ -96,7 +96,7 @@ RUN if [ -n "${COMFY_CUSTOM_NODES:-}" ]; then \
       echo "Installing custom ComfyUI nodes: ${COMFY_CUSTOM_NODES}" \
       /usr/local/bin/comfy-node-install ${COMFY_CUSTOM_NODES} \
     else \
-      echo "No custom ComfyUI nodes to install" \
+      echo "No custom ComfyUI nodes to install"; \
     fi  
 
 # Go back to the root
