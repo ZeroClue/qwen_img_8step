@@ -7,3 +7,4 @@ HUB_SUBMISSION.md
 1handler.py
 1Dockerfile
 docker-compose.yml
+1test_input.json
