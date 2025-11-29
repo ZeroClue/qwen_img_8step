@@ -1,76 +1,113 @@
 {
-  "title": "Qwen Image 8-Step Generation",
-  "description": "Ultra-fast 8-step AI image generation using Qwen Vision-Language models with Lightning optimization. Generate high-quality 1328×1328 images in 2-4 seconds.",
+  "title": "ComfyUI",
+  "description": "Generate images with ComfyUI using FLUX.1-dev (fp8)",
   "type": "serverless",
   "category": "image",
+  "iconUrl": "https://cpjrphpz3t5wbwfe.public.blob.vercel-storage.com/comfy-ui.png",
   "config": {
     "runsOn": "GPU",
-    "containerDiskInGb": 50,
+    "containerDiskInGb": 20,
+    "gpuIds": "ADA_24",
     "gpuCount": 1,
-    "gpuIds": "NVIDIA RTX A5000,NVIDIA RTX 4090,NVIDIA A40",
-    "allowedCudaVersions": [
-      "12.8", "12.7", "12.6", "12.5", "12.4",
-      "12.3", "12.2", "12.1", "12.0"
-    ],
+    "allowedCudaVersions": ["12.7", "12.6"],
     "env": [
       {
-        "key": "PROMPT",
+        "key": "COMFY_ORG_API_KEY",
         "input": {
-          "name": "Prompt",
+          "name": "Comfy.org API Key",
           "type": "string",
-          "description": "Text prompt for image generation",
-          "default": "A vibrant neon-lit street scene in Hong Kong"
-        }
-      },
-      {
-        "key": "SEED",
-        "input": {
-          "name": "Seed",
-          "type": "number",
-          "description": "Random seed for generation (use -1 for random)",
-          "default": -1
-        }
-      },
-      {
-        "key": "WIDTH",
-        "input": {
-          "name": "Width",
-          "type": "number",
-          "description": "Image width in pixels",
-          "default": 1328,
-          "min": 512,
-          "max": 2048
-        }
-      },
-      {
-        "key": "HEIGHT",
-        "input": {
-          "name": "Height",
-          "type": "number",
-          "description": "Image height in pixels",
-          "default": 1328,
-          "min": 512,
-          "max": 2048
-        }
-      },
-      {
-        "key": "STEPS",
-        "input": {
-          "name": "Steps",
-          "type": "number",
-          "description": "Number of generation steps (fixed at 8 for speed)",
-          "default": 8,
-          "min": 8,
-          "max": 8
-        }
-      },
-      {
-        "key": "CUSTOM_WORKFLOW",
-        "input": {
-          "name": "Custom Workflow",
-          "type": "string",
-          "description": "Optional: Complete ComfyUI workflow JSON to override all other settings",
+          "description": "Enter your Comfy.org API key to use API Nodes",
           "default": "",
+          "advanced": false
+        }
+      },
+      {
+        "key": "BUCKET_ENDPOINT_URL",
+        "input": {
+          "name": "S3 Bucket Endpoint URL",
+          "type": "string",
+          "description": "Upload images to S3 (e.g. https://<bucket>.s3.<region>.amazonaws.com)",
+          "default": "",
+          "advanced": true
+        }
+      },
+      {
+        "key": "BUCKET_ACCESS_KEY_ID",
+        "input": {
+          "name": "S3 Access Key ID",
+          "type": "string",
+          "description": "AWS Access Key ID (if S3 upload is enabled)",
+          "default": "",
+          "advanced": true
+        }
+      },
+      {
+        "key": "BUCKET_SECRET_ACCESS_KEY",
+        "input": {
+          "name": "S3 Secret Access Key",
+          "type": "string",
+          "description": "AWS Secret Access Key (if S3 upload is enabled)",
+          "default": "",
+          "advanced": true
+        }
+      },
+      {
+        "key": "SERVE_API_LOCALLY",
+        "input": {
+          "name": "Serve API Locally (dev)",
+          "type": "boolean",
+          "description": "Dev only: run a local test API",
+          "default": false,
+          "advanced": true
+        }
+      },
+      {
+        "key": "COMFY_LOG_LEVEL",
+        "input": {
+          "name": "ComfyUI Log Level",
+          "type": "string",
+          "description": "Log level for ComfyUI (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+          "default": "DEBUG",
+          "advanced": true
+        }
+      },
+      {
+        "key": "WEBSOCKET_RECONNECT_ATTEMPTS",
+        "input": {
+          "name": "Websocket Reconnect Attempts",
+          "type": "number",
+          "description": "How many times to retry if the connection drops",
+          "default": 5,
+          "advanced": true
+        }
+      },
+      {
+        "key": "WEBSOCKET_RECONNECT_DELAY_S",
+        "input": {
+          "name": "Websocket Reconnect Delay (s)",
+          "type": "number",
+          "description": "Seconds to wait between reconnect attempts",
+          "default": 3,
+          "advanced": true
+        }
+      },
+      {
+        "key": "WEBSOCKET_TRACE",
+        "input": {
+          "name": "Websocket Trace",
+          "type": "boolean",
+          "description": "Detailed connection logs (debug only)",
+          "default": false,
+          "advanced": true
+        }
+      },
+      {
+        "key": "REFRESH_WORKER",
+        "input": {
+          "name": "Refresh Worker",
+          "type": "boolean",
+          "description": "Restart the worker after each job for a clean state",
+          "default": false,
           "advanced": true
         }
       }
