@@ -1,13 +1,13 @@
 {
-  "title": "ComfyUI",
-  "description": "Generate images with ComfyUI using FLUX.1-dev (fp8)",
+  "title": "Qwen Image 8-Step Generation",
+  "description": "Ultra-fast 8-step AI image generation using Qwen Vision-Language models with Lightning optimization.",
   "type": "serverless",
   "category": "image",
   "iconUrl": "https://cpjrphpz3t5wbwfe.public.blob.vercel-storage.com/comfy-ui.png",
   "config": {
     "runsOn": "GPU",
-    "containerDiskInGb": 20,
-    "gpuIds": "ADA_24",
+    "containerDiskInGb": 50,
+    "gpuIds": "ADA_24,NVIDIA RTX A5000,NVIDIA RTX 4090,NVIDIA A40",
     "gpuCount": 1,
     "allowedCudaVersions": ["12.7", "12.6"],
     "env": [
