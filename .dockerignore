@@ -25,3 +25,10 @@ example-request2.json
 # - handler.py (for serverless)
 # - example-request.json (for testing)
 # - .runpod/ (for Hub configuration)
+
+#others
+.runpod/1hub.json
+.runpod/1tests.json
+1handler.py
+1Dockerfile
+docker-compose.yml

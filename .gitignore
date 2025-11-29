@@ -2,3 +2,8 @@ CLAUDE.md
 .claude/
 HUB_SUBMISSION.md
 .clauderesources/
+.runpod/1hub.json
+.runpod/1tests.json
+1handler.py
+1Dockerfile
+docker-compose.yml
