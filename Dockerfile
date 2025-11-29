@@ -92,9 +92,10 @@ WORKDIR /comfyui
 #RUN /usr/local/bin/comfy-node-install
 
 # install custom nodes into comfyui
-RUN if [[ -n "${COMFY_CUSTOM_NODES}" ]]; then \
-      echo "Installing custom ComfyUI nodes: ${COMFY_CUSTOM_NODES}" \
-      /usr/local/bin/comfy-node-install ${COMFY_CUSTOM_NODES} \
+RUN if [ -n "${COMFY_CUSTOM_NODES}" ]; then \
+      echo "Installing custom ComfyUI nodes: ${COMFY_CUSTOM_NODES}" && \
+      /usr/local/bin/comfy-node-install ${COMFY_CUSTOM_NODES} || \
+      (echo "Failed to install custom nodes" && exit 1); \
     else \
       echo "No custom ComfyUI nodes to install"; \
     fi  
@@ -105,6 +106,10 @@ WORKDIR /
 # Copy helper script to switch Manager network mode at container start
 COPY scripts/comfy-manager-set-mode.sh /usr/local/bin/comfy-manager-set-mode
 RUN chmod +x /usr/local/bin/comfy-manager-set-mode
+
+# Copy model validation scripts for build-time use
+COPY src/check-models.sh src/check-models-parallel.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/check-models.sh /usr/local/bin/check-models-parallel.sh
 
 # Set the default command to run when starting the container
 CMD ["/start.sh"]
@@ -122,12 +127,10 @@ WORKDIR /comfyui
 # Create necessary directories upfront
 RUN mkdir -p models/checkpoints models/vae models/unet models/clip models/loras
 
-# Download checkpoints/vae/unet/clip/loras models to include in image based on model type
+# Download models using validation scripts (more robust than raw wget)
 RUN if [ "$MODEL_TYPE" = "qwen_image_fp8" ]; then \
-      wget -q -O models/diffusion_models/qwen_image_fp8_e4m3fn.safetensors https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/diffusion_models/qwen_image_fp8_e4m3fn.safetensors && \
-      wget -q -O models/clip/qwen_2.5_vl_7b_fp8_scaled.safetensors https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors && \
-      wget -q -O models/vae/qwen_image_vae.safetensors https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/vae/qwen_image_vae.safetensors && \
-      wget -q -O models/loras/Qwen-Image-Lightning-8steps-V1.0.safetensors https://huggingface.co/lightx2v/Qwen-Image-Lightning/resolve/main/Qwen-Image-Lightning-8steps-V1.0.safetensors; \
+      cd /comfyui && \
+      check-models.sh; \
     fi
 
 # RUN if [ "$MODEL_TYPE" = "sdxl" ]; then \
