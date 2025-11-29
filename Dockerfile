@@ -92,7 +92,7 @@ WORKDIR /comfyui
 #RUN /usr/local/bin/comfy-node-install
 
 # install custom nodes into comfyui
-RUN if [ -n "${COMFY_CUSTOM_NODES}" ]; then \
+RUN if [[ -n "${COMFY_CUSTOM_NODES}" ]]; then \
       echo "Installing custom ComfyUI nodes: ${COMFY_CUSTOM_NODES}" \
       /usr/local/bin/comfy-node-install ${COMFY_CUSTOM_NODES} \
     else \
