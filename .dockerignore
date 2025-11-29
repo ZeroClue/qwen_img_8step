@@ -1,6 +1,7 @@
 # Claude Code files
 CLAUDE.md
 .claude/
+.clauderesources/
 
 # Development and documentation files
 HUB_SUBMISSION.md
