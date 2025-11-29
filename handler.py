@@ -325,6 +325,251 @@ def get_available_models():
         return {}
 
 
+# Model configuration extracted from check-models.sh
+QWEN_MODELS = {
+    "diffusion_models/qwen_image_fp8_e4m3fn.safetensors": {
+        "url": "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/diffusion_models/qwen_image_fp8_e4m3fn.safetensors",
+        "relative_path": "diffusion_models",
+        "filename": "qwen_image_fp8_e4m3fn.safetensors",
+        "name": "Qwen Diffusion Model",
+        "type": "unet"
+    },
+    "clip/qwen_2.5_vl_7b_fp8_scaled.safetensors": {
+        "url": "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors",
+        "relative_path": "clip",
+        "filename": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+        "name": "Qwen CLIP Model",
+        "type": "clip"
+    },
+    "vae/qwen_image_vae.safetensors": {
+        "url": "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/vae/qwen_image_vae.safetensors",
+        "relative_path": "vae",
+        "filename": "qwen_image_vae.safetensors",
+        "name": "Qwen VAE Model",
+        "type": "vae"
+    },
+    "loras/Qwen-Image-Lightning-8steps-V1.0.safetensors": {
+        "url": "https://huggingface.co/lightx2v/Qwen-Image-Lightning/resolve/main/Qwen-Image-Lightning-8steps-V1.0.safetensors",
+        "relative_path": "loras",
+        "filename": "Qwen-Image-Lightning-8steps-V1.0.safetensors",
+        "name": "Qwen Lightning LoRA",
+        "type": "loras"
+    }
+}
+
+
+def extract_required_models(workflow_data):
+    """
+    Extract required models from workflow JSON by analyzing model-loading nodes
+
+    Args:
+        workflow_data (dict): Workflow JSON data
+
+    Returns:
+        set: Set of required model filenames
+    """
+    required_models = set()
+
+    if not workflow_data or not isinstance(workflow_data, dict):
+        return required_models
+
+    for node_id, node_data in workflow_data.items():
+        if not isinstance(node_data, dict) or "class_type" not in node_data:
+            continue
+
+        class_type = node_data["class_type"]
+        inputs = node_data.get("inputs", {})
+
+        # Check different model loader node types
+        if class_type in ["UNETLoader", "CheckpointLoaderSimple", "CLIPLoader", "VAELoader", "LoraLoaderModelOnly"]:
+            for param_name, param_value in inputs.items():
+                if param_name in ["unet_name", "ckpt_name", "clip_name", "vae_name", "lora_name"]:
+                    if isinstance(param_value, str) and param_value:
+                        required_models.add(param_value)
+
+    return required_models
+
+
+def validate_model_exists(model_filename, model_type=None):
+    """
+    Check if a model file exists locally
+
+    Args:
+        model_filename (str): Model filename to check
+        model_type (str): Optional model type for path lookup
+
+    Returns:
+        bool: True if model exists, False otherwise
+    """
+    # Try to find the model in known paths
+    if model_type:
+        model_path = f"/comfyui/models/{model_type}/{model_filename}"
+        if os.path.exists(model_path):
+            return True
+
+    # Check all possible model directories
+    model_dirs = ["diffusion_models", "clip", "vae", "loras", "checkpoints", "unet"]
+    for model_dir in model_dirs:
+        model_path = f"/comfyui/models/{model_dir}/{model_filename}"
+        if os.path.exists(model_path):
+            return True
+
+    return False
+
+
+def validate_required_models(required_models):
+    """
+    Validate that all required models are available locally
+
+    Args:
+        required_models (set): Set of required model filenames
+
+    Returns:
+        tuple: (missing_models, found_models)
+    """
+    missing_models = []
+    found_models = []
+
+    for model_filename in required_models:
+        found = False
+
+        # Check if model exists in any known location
+        for model_config in QWEN_MODELS.values():
+            if model_config["filename"] == model_filename:
+                if validate_model_exists(model_filename, model_config["relative_path"]):
+                    found_models.append(model_filename)
+                    found = True
+                    break
+
+        if not found:
+            missing_models.append(model_filename)
+
+    return missing_models, found_models
+
+
+def download_model(model_config, client_id=None):
+    """
+    Download a model using ComfyUI CLI with progress reporting
+
+    Args:
+        model_config (dict): Model configuration with url, path, filename
+        client_id (str): Optional client ID for WebSocket progress updates
+
+    Returns:
+        bool: True if download successful, False otherwise
+    """
+    import subprocess
+
+    try:
+        print(f"worker-comfyui - Downloading {model_config['name']}...")
+
+        # Send download start status if WebSocket available
+        if client_id:
+            send_download_status(client_id, {
+                "status": "downloading",
+                "model": model_config["name"],
+                "progress": 0
+            })
+
+        # Use ComfyUI CLI for download with retry logic
+        cmd = [
+            "comfy", "model", "download",
+            "--url", model_config["url"],
+            "--relative-path", f"models/{model_config['relative_path']}",
+            "--filename", model_config["filename"]
+        ]
+
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+
+        if result.returncode == 0:
+            print(f"worker-comfyui - Successfully downloaded {model_config['name']}")
+
+            if client_id:
+                send_download_status(client_id, {
+                    "status": "completed",
+                    "model": model_config["name"],
+                    "progress": 100
+                })
+            return True
+        else:
+            print(f"worker-comfyui - Download failed for {model_config['name']}: {result.stderr}")
+
+            if client_id:
+                send_download_status(client_id, {
+                    "status": "error",
+                    "model": model_config["name"],
+                    "error": result.stderr
+                })
+            return False
+
+    except subprocess.TimeoutExpired:
+        print(f"worker-comfyui - Download timeout for {model_config['name']}")
+        if client_id:
+            send_download_status(client_id, {
+                "status": "error",
+                "model": model_config["name"],
+                "error": "Download timeout (10 minutes)"
+            })
+        return False
+    except Exception as e:
+        print(f"worker-comfyui - Download error for {model_config['name']}: {e}")
+        if client_id:
+            send_download_status(client_id, {
+                "status": "error",
+                "model": model_config["name"],
+                "error": str(e)
+            })
+        return False
+
+
+def download_missing_models(missing_models, client_id=None):
+    """
+    Download all missing models
+
+    Args:
+        missing_models (list): List of missing model filenames
+        client_id (str): Optional client ID for WebSocket progress updates
+
+    Returns:
+        tuple: (successful_downloads, failed_downloads)
+    """
+    successful = []
+    failed = []
+
+    for model_filename in missing_models:
+        # Find model configuration
+        model_config = None
+        for config in QWEN_MODELS.values():
+            if config["filename"] == model_filename:
+                model_config = config
+                break
+
+        if not model_config:
+            print(f"worker-comfyui - Unknown model: {model_filename}")
+            failed.append(model_filename)
+            continue
+
+        if download_model(model_config, client_id):
+            successful.append(model_filename)
+        else:
+            failed.append(model_filename)
+
+    return successful, failed
+
+
+def send_download_status(client_id, status_data):
+    """
+    Send download status via WebSocket (implementation depends on WebSocket setup)
+
+    Args:
+        client_id (str): Client ID for WebSocket communication
+        status_data (dict): Status information to send
+    """
+    # This is a placeholder - actual WebSocket implementation depends on
+    # how the WebSocket connection is managed in the calling context
+    print(f"worker-comfyui - Download status [{client_id}]: {status_data}")
+
+
 def queue_workflow(workflow, client_id, comfy_org_api_key=None):
     """
     Queue a workflow to be processed by ComfyUI
@@ -523,6 +768,39 @@ def handler(job):
         return {
             "error": f"ComfyUI server ({COMFY_HOST}) not reachable after multiple retries."
         }
+
+    # Validate and download required models before workflow execution
+    print(f"worker-comfyui - Checking workflow model requirements...")
+    required_models = extract_required_models(workflow)
+    print(f"worker-comfyui - Required models: {required_models}")
+
+    if required_models:
+        missing_models, found_models = validate_required_models(required_models)
+
+        if missing_models:
+            print(f"worker-comfyui - Missing models: {missing_models}")
+            print(f"worker-comfyui - Found models: {found_models}")
+            print(f"worker-comfyui - Downloading missing models...")
+
+            # Download missing models (no WebSocket client yet, so pass None)
+            successful_downloads, failed_downloads = download_missing_models(missing_models)
+
+            if successful_downloads:
+                print(f"worker-comfyui - Successfully downloaded: {successful_downloads}")
+
+            if failed_downloads:
+                error_msg = f"Failed to download required models: {failed_downloads}"
+                print(f"worker-comfyui - {error_msg}")
+                return {"error": error_msg}
+
+            # Re-validate after downloads
+            missing_models, found_models = validate_required_models(required_models)
+            if missing_models:
+                error_msg = f"Still missing required models after download attempt: {missing_models}"
+                print(f"worker-comfyui - {error_msg}")
+                return {"error": error_msg}
+        else:
+            print(f"worker-comfyui - All required models found locally: {found_models}")
 
     # Upload input images if they exist
     if input_images:
