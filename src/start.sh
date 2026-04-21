@@ -1,5 +1,27 @@
 #!/usr/bin/env bash
 
+# 1. EXIT EARLY IF THIS IS A RUNPOD BUILD TEST
+# This prevents the build from failing due to long download times
+#if [ "$RUNPOD_STOP_AFTER_IMAGE_BUILD" == "true" ]; then
+#    echo "worker-comfyui: Build test detected. Skipping model check and exiting."
+#    exit 0
+#fi
+
+# 2. SYMLINK MODEL DIRS TO NETWORK VOLUME IF PRESENT
+if mountpoint -q /runpod-volume 2>/dev/null; then
+    echo "worker-comfyui: Network volume detected, symlinking model dirs to /runpod-volume"
+    for dir in diffusion_models clip vae loras; do
+        mkdir -p "/runpod-volume/comfyui/models/$dir"
+        ln -sfn "/runpod-volume/comfyui/models/$dir" "/comfyui/models/$dir"
+    done
+else
+    echo "worker-comfyui: No network volume detected, using local model storage"
+fi
+
+# 3. RUN MODEL CHECK (Sequential is safer for large Qwen models)
+echo "worker-comfyui: Validating models..."
+/usr/local/bin/check-models.sh
+
 # Use libtcmalloc for better memory management
 TCMALLOC="$(ldconfig -p | grep -Po "libtcmalloc.so.\d" | head -n 1)"
 export LD_PRELOAD="${TCMALLOC}"
