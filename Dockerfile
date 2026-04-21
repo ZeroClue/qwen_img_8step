@@ -66,8 +66,7 @@ RUN if [ "$ENABLE_PYTORCH_UPGRADE" = "true" ]; then \
     fi
 
 # for qwen accelleration
-RUN pip install flash-attn --no-build-isolation
-RUN pip install transformers accelerate einops
+RUN uv pip install flash-attn transformers accelerate einops
 
 # Change working directory to ComfyUI
 WORKDIR /comfyui
