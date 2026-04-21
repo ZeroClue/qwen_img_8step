@@ -64,9 +64,6 @@ RUN if [ "$ENABLE_PYTORCH_UPGRADE" = "true" ]; then \
       uv pip install --force-reinstall torch torchvision torchaudio --index-url ${PYTORCH_INDEX_URL}; \
     fi
 
-# for qwen acceleration
-RUN uv pip install transformers accelerate einops
-
 # Change working directory to ComfyUI
 WORKDIR /comfyui
 
