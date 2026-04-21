@@ -73,8 +73,8 @@ ADD src/extra_model_paths.yaml ./
 # Go back to the root
 WORKDIR /
 
-# Install Python runtime dependencies for the handler
-RUN uv pip install runpod requests websocket-client
+# Install Python runtime dependencies for the handler and ComfyUI
+RUN uv pip install runpod requests websocket-client sqlalchemy
 
 # Add application code and scripts
 ADD src/start.sh handler.py test_input.json ./
