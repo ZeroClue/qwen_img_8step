@@ -59,6 +59,9 @@ RUN if [ -n "${CUDA_VERSION_FOR_COMFY}" ]; then \
       /usr/bin/yes | comfy --workspace /comfyui install --version "${COMFYUI_VERSION}" --nvidia --fast-deps; \
     fi
 
+# Install ComfyUI runtime requirements (alembic, Pillow, blake3, etc.)
+RUN uv pip install -r /comfyui/requirements.txt
+
 # Upgrade PyTorch if needed (for newer CUDA versions)
 # Removed torchaudio from the install below
 RUN if [ "$ENABLE_PYTORCH_UPGRADE" = "true" ]; then \
@@ -74,8 +77,8 @@ ADD src/extra_model_paths.yaml ./
 # Go back to the root
 WORKDIR /
 
-# Install Python runtime dependencies for the handler and ComfyUI
-RUN uv pip install runpod requests websocket-client sqlalchemy
+# Install Python runtime dependencies for the handler
+RUN uv pip install runpod requests websocket-client
 
 # Add application code and scripts
 ADD src/start.sh handler.py test_input.json ./
