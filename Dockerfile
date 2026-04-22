@@ -62,11 +62,8 @@ RUN if [ -n "${CUDA_VERSION_FOR_COMFY}" ]; then \
 # Install ComfyUI runtime requirements (alembic, Pillow, blake3, etc.)
 RUN uv pip install -r /comfyui/requirements.txt
 
-# Upgrade PyTorch if needed (for newer CUDA versions)
-# Removed torchaudio from the install below
-RUN if [ "$ENABLE_PYTORCH_UPGRADE" = "true" ]; then \
-      uv pip install --force-reinstall torch torchvision torchaudio --index-url ${PYTORCH_INDEX_URL}; \
-    fi
+# Upgrade PyTorch for CUDA 12.6+ compatibility (forward-compatible with 12.7/12.8 drivers)
+RUN uv pip install --force-reinstall torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
 
 # Change working directory to ComfyUI
 WORKDIR /comfyui
