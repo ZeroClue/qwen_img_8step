@@ -39,6 +39,10 @@ variable "COMFY_CUSTOM_NODES" {
   default = "comfyui-image-saver"
 }
 
+variable "BUILD_VERSION" {
+  default = ""
+}
+
 group "default" {
   targets = ["base", "qwen_image_fp8", "base-cuda12-6-3"]
 }
@@ -56,6 +60,7 @@ target "base" {
     PYTORCH_INDEX_URL = "${PYTORCH_INDEX_URL}"
     MODEL_TYPE = "base"
     COMFY_CUSTOM_NODES = "${COMFY_CUSTOM_NODES}"
+    BUILD_VERSION = "${BUILD_VERSION}"
   }
   tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-base"]
 }
@@ -72,6 +77,7 @@ target "qwen_image_fp8" {
     PYTORCH_INDEX_URL = "${PYTORCH_INDEX_URL}"
     MODEL_TYPE = "qwen_image_fp8"
     COMFY_CUSTOM_NODES = "comfyui-image-saver"
+    BUILD_VERSION = "${BUILD_VERSION}"
   }
   tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-qwen_image_fp8"]
   inherits = ["base"]
@@ -90,6 +96,7 @@ target "base-cuda12-6-3" {
     PYTORCH_INDEX_URL = "https://download.pytorch.org/whl/cu126"
     MODEL_TYPE = "base"
     COMFY_CUSTOM_NODES = "${COMFY_CUSTOM_NODES}"
+    BUILD_VERSION = "${BUILD_VERSION}"
   }
   tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-base-cuda12.6.3"]
 }

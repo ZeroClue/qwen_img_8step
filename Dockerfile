@@ -10,6 +10,7 @@ ARG CUDA_VERSION_FOR_COMFY
 ARG ENABLE_PYTORCH_UPGRADE=false
 ARG PYTORCH_INDEX_URL
 ARG COMFY_CUSTOM_NODES=comfyui-image-saver
+ARG BUILD_VERSION=dev
 
 # Prevents prompts from packages asking for user input during installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -75,7 +76,7 @@ ADD src/extra_model_paths.yaml ./
 WORKDIR /
 
 # Install Python runtime dependencies for the handler
-RUN uv pip install runpod requests websocket-client huggingface_hub
+RUN uv pip install runpod requests websocket-client huggingface_hub piexif
 
 # Add application code and scripts
 ADD src/start.sh handler.py test_input.json ./
@@ -118,6 +119,9 @@ RUN chmod +x /usr/local/bin/check-models.sh /usr/local/bin/check-models-parallel
 # Models are downloaded at runtime via `hf download` in check-models.sh — hf_xet provides
 # chunk-level parallelism and HF_TOKEN (set via endpoint env) enables faster authenticated downloads.
 ENV HF_XET_HIGH_PERFORMANCE=1
+
+# Stamp build version for runtime identification
+ENV BUILD_VERSION=${BUILD_VERSION}
 
 # Set the default command to run when starting the container
 CMD ["/start.sh"]

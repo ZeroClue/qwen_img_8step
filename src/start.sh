@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+echo "worker-comfyui: Build version ${BUILD_VERSION:-unknown}"
+
 # SYMLINK MODEL DIRS TO NETWORK VOLUME IF PRESENT
 if mountpoint -q /runpod-volume 2>/dev/null; then
     echo "worker-comfyui: Network volume detected, symlinking model dirs to /runpod-volume"
