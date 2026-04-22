@@ -9,7 +9,7 @@ ARG COMFYUI_VERSION=latest
 ARG CUDA_VERSION_FOR_COMFY
 ARG ENABLE_PYTORCH_UPGRADE=false
 ARG PYTORCH_INDEX_URL
-ARG COMFY_CUSTOM_NODES
+ARG COMFY_CUSTOM_NODES=comfyui-image-saver
 
 # Prevents prompts from packages asking for user input during installation
 ENV DEBIAN_FRONTEND=noninteractive
