@@ -1,26 +1,27 @@
 #!/usr/bin/env bash
 
-# 1. EXIT EARLY IF THIS IS A RUNPOD BUILD TEST
-# This prevents the build from failing due to long download times
-#if [ "$RUNPOD_STOP_AFTER_IMAGE_BUILD" == "true" ]; then
-#    echo "worker-comfyui: Build test detected. Skipping model check and exiting."
-#    exit 0
-#fi
-
-# 2. SYMLINK MODEL DIRS TO NETWORK VOLUME IF PRESENT
+# SYMLINK MODEL DIRS TO NETWORK VOLUME IF PRESENT
 if mountpoint -q /runpod-volume 2>/dev/null; then
     echo "worker-comfyui: Network volume detected, symlinking model dirs to /runpod-volume"
     for dir in diffusion_models clip vae loras; do
         mkdir -p "/runpod-volume/comfyui/models/$dir"
+        # Seed volume from baked-in models on first run (avoids re-downloading)
+        if [ -z "$(ls -A /runpod-volume/comfyui/models/$dir/ 2>/dev/null)" ] && \
+           [ -n "$(ls -A /comfyui/models/$dir/ 2>/dev/null)" ]; then
+            echo "worker-comfyui: Copying baked-in $dir to network volume..."
+            cp /comfyui/models/$dir/* /runpod-volume/comfyui/models/$dir/
+        fi
         ln -sfn "/runpod-volume/comfyui/models/$dir" "/comfyui/models/$dir"
     done
 else
     echo "worker-comfyui: No network volume detected, using local model storage"
 fi
 
-# 3. RUN MODEL CHECK (Sequential is safer for large Qwen models)
-echo "worker-comfyui: Validating models..."
-/usr/local/bin/check-models.sh
+# PRE-FETCH MODELS IN BACKGROUND (non-blocking)
+# The handler will download any still-missing models on-demand when a job arrives.
+# This background pass helps pre-populate models to reduce first-job latency.
+echo "worker-comfyui: Pre-fetching models in background..."
+/usr/local/bin/check-models.sh &
 
 # Use libtcmalloc for better memory management
 TCMALLOC="$(ldconfig -p | grep -Po "libtcmalloc.so.\d" | head -n 1)"

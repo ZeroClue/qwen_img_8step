@@ -34,3 +34,6 @@ example-request2.json
 1Dockerfile
 docker-compose.yml
 1test_input.json
+
+.remember/
+runpod-tests.log

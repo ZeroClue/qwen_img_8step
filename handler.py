@@ -479,7 +479,7 @@ def download_model(model_config, client_id=None):
             "--filename", model_config["filename"]
         ]
 
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=1200)
 
         if result.returncode == 0:
             print(f"worker-comfyui - Successfully downloaded {model_config['name']}")
@@ -508,7 +508,7 @@ def download_model(model_config, client_id=None):
             send_download_status(client_id, {
                 "status": "error",
                 "model": model_config["name"],
-                "error": "Download timeout (10 minutes)"
+                "error": "Download timeout (20 minutes)"
             })
         return False
     except Exception as e:

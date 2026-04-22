@@ -75,7 +75,7 @@ ADD src/extra_model_paths.yaml ./
 WORKDIR /
 
 # Install Python runtime dependencies for the handler
-RUN uv pip install runpod requests websocket-client
+RUN uv pip install runpod requests websocket-client huggingface_hub
 
 # Add application code and scripts
 ADD src/start.sh handler.py test_input.json ./
@@ -114,10 +114,35 @@ RUN chmod +x /usr/local/bin/comfy-manager-set-mode
 COPY src/check-models.sh src/check-models-parallel.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/check-models.sh /usr/local/bin/check-models-parallel.sh
 
+# Enable high-performance downloads from HuggingFace (hf_xet chunk-based parallel transfers)
+ENV HF_XET_HIGH_PERFORMANCE=1
+
+# Pre-download all required models at build time for instant startup and reliable test runs.
+# Both repos download in parallel; hf_xet adds chunk-level parallelism per file.
+RUN mkdir -p /comfyui/models/{diffusion_models,clip,vae,loras} && \
+    hf download Comfy-Org/Qwen-Image_ComfyUI \
+        split_files/diffusion_models/qwen_image_fp8_e4m3fn.safetensors \
+        split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors \
+        split_files/vae/qwen_image_vae.safetensors \
+        --local-dir /tmp/qwen-models & \
+    hf download lightx2v/Qwen-Image-Lightning \
+        Qwen-Image-Lightning-8steps-V1.0.safetensors \
+        --local-dir /tmp/qwen-lora & \
+    wait && \
+    mv /tmp/qwen-models/split_files/diffusion_models/qwen_image_fp8_e4m3fn.safetensors \
+        /comfyui/models/diffusion_models/ && \
+    mv /tmp/qwen-models/split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors \
+        /comfyui/models/clip/ && \
+    mv /tmp/qwen-models/split_files/vae/qwen_image_vae.safetensors \
+        /comfyui/models/vae/ && \
+    mv /tmp/qwen-lora/Qwen-Image-Lightning-8steps-V1.0.safetensors \
+        /comfyui/models/loras/ && \
+    rm -rf /tmp/qwen-models /tmp/qwen-lora
+
 # Set the default command to run when starting the container
 CMD ["/start.sh"]
 
 # Stage 2: Final image
 FROM base AS final
 
-# Models will be downloaded on-demand at runtime to avoid build timeouts
+# Models are pre-downloaded at build time (see hf download step above)
