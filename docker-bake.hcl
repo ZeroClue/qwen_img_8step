@@ -36,7 +36,7 @@ variable "HUGGINGFACE_ACCESS_TOKEN" {
 }
 
 variable "COMFY_CUSTOM_NODES" {
-  default = ""
+  default = "comfyui-image-saver"
 }
 
 group "default" {

@@ -110,6 +110,16 @@
           "default": false,
           "advanced": true
         }
+      },
+      {
+        "key": "HF_TOKEN",
+        "input": {
+          "name": "HuggingFace Token",
+          "type": "string",
+          "description": "HF access token for faster authenticated downloads and gated models",
+          "default": "",
+          "advanced": false
+        }
       }
     ]
   }
