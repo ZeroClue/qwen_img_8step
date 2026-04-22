@@ -14,13 +14,13 @@ variable "COMFYUI_VERSION" {
   default = "latest"
 }
 
-# Global defaults for standard CUDA 12.4.1 images
+# Global defaults for standard CUDA 12.6.3 images
 variable "BASE_IMAGE" {
-  default = "nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04"
+  default = "nvidia/cuda:12.6.3-cudnn-devel-ubuntu22.04"
 }
 
 variable "CUDA_VERSION_FOR_COMFY" {
-  default = "12.4"
+  default = "12.6"
 }
 
 variable "ENABLE_PYTORCH_UPGRADE" {
@@ -40,7 +40,7 @@ variable "COMFY_CUSTOM_NODES" {
 }
 
 group "default" {
-  targets = ["base", "qwen_image_fp8", "base-cuda12-4-1"]
+  targets = ["base", "qwen_image_fp8", "base-cuda12-6-3"]
 }
 
 target "base" {
@@ -77,20 +77,20 @@ target "qwen_image_fp8" {
   inherits = ["base"]
 }
 
-target "base-cuda12-4-1" {
+target "base-cuda12-6-3" {
   context = "."
   dockerfile = "Dockerfile"
   target = "base"
   platforms = ["linux/amd64"]
   args = {
-    BASE_IMAGE = "nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04"
+    BASE_IMAGE = "nvidia/cuda:12.6.3-cudnn-devel-ubuntu22.04"
     COMFYUI_VERSION = "${COMFYUI_VERSION}"
     CUDA_VERSION_FOR_COMFY = "${CUDA_VERSION_FOR_COMFY}"
     ENABLE_PYTORCH_UPGRADE = "true"
-    PYTORCH_INDEX_URL = "https://download.pytorch.org/whl/cu124"
+    PYTORCH_INDEX_URL = "https://download.pytorch.org/whl/cu126"
     MODEL_TYPE = "base"
     COMFY_CUSTOM_NODES = "${COMFY_CUSTOM_NODES}"
   }
-  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-base-cuda12.4.1"]
+  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-base-cuda12.6.3"]
 }
 
