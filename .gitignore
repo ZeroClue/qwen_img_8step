@@ -12,3 +12,7 @@ docker-compose.yml
 .remember/
 runpod-tests.log
 roadmap.md
+.agents/
+.pi/
+skills-lock.json
+runpod-setup.md
