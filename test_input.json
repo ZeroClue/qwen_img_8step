@@ -152,19 +152,6 @@
         "_meta": {
           "title": "LoraLoaderModelOnly"
         }
-      },
-      "75": {
-        "inputs": {
-          "text": "%time_%basemodelname_%seed",
-          "images": [
-            "8",
-            0
-          ]
-        },
-        "class_type": "Image Saver Simple",
-        "_meta": {
-          "title": "Image Saver Simple"
-        }
       }
     }
   }
