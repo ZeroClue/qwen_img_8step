@@ -18,3 +18,5 @@ roadmap.md
 skills-lock.json
 runpod-setup.md
 __pycache__/
+.env
+generate-image.skill

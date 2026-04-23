@@ -1,5 +1,5 @@
 # Build argument for base image selection
-ARG BASE_IMAGE=nvidia/cuda:12.6.3-cudnn-runtime-ubuntu24.04
+ARG BASE_IMAGE=nvidia/cuda:12.8.0-cudnn-runtime-ubuntu24.04
 
 # Stage 1: Base image with all dependencies
 FROM ${BASE_IMAGE} AS base
@@ -53,8 +53,8 @@ RUN if [ -n "${CUDA_VERSION_FOR_COMFY}" ]; then \
 # Install ComfyUI runtime requirements
 RUN uv pip install -r /comfyui/requirements.txt
 
-# Force-install PyTorch cu126 for forward compatibility with CUDA 12.7/12.8 drivers
-RUN uv pip install --force-reinstall torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+# Force-install PyTorch cu128 for Blackwell (RTX 5090) and backwards compatibility
+RUN uv pip install --force-reinstall torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
 
 # Support for the network volume
 ADD src/extra_model_paths.yaml /comfyui/
