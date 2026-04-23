@@ -74,82 +74,56 @@ cd qwen_img_8step
 
 ## 📡 API Usage
 
-### RunPod Hub API (Container Deployment)
+### Simplified Prompt API (Recommended)
 ```python
 import requests
-import json
+import base64
 
-# Hub deployment endpoint (container)
-url = "https://your-pod-id.runpod-serverless.com/prompt"
+url = "https://api.runpod.ai/v2/{endpoint_id}/runsync"
+headers = {"Authorization": "Bearer YOUR_API_KEY"}
 
-# Load example workflow
-with open('example-request.json', 'r') as f:
-    payload = json.load(f)
-
-# Customize prompt
-payload["input"]["workflow"]["6"]["inputs"]["text"] = "Your custom prompt here"
-
-response = requests.post(url, json=payload)
-prompt_id = response.json()["prompt_id"]
-print(f"Generation started with ID: {prompt_id}")
-```
-
-### RunPod Serverless API (Function Deployment) ⭐ **NEW**
-```python
-import requests
-import json
-
-# Serverless endpoint (auto-generated)
-url = "https://your-endpoint.runpod-serverless.com/v1/runner/qwen-image-8step"
-
-# Serverless payload format
 payload = {
-    "workflow": {
-        "3": {
-            "inputs": {
-                "seed": 12345,
-                "steps": 8,
-                "cfg": 1,
-                "sampler_name": "euler",
-                "scheduler": "simple",
-                "denoise": 1,
-                "model": ["66", 0],
-                "positive": ["6", 0],
-                "negative": ["7", 0],
-                "latent_image": ["58", 0]
-            },
-            "class_type": "KSampler"
-        },
-        "6": {
-            "inputs": {
-                "text": "Your custom prompt here",
-                "clip": ["38", 0]
-            },
-            "class_type": "CLIPTextEncode"
-        },
-        # ... (full workflow from example-request.json)
+    "input": {
+        "prompt": "A cat sitting on a windowsill, warm afternoon sunlight, photorealistic",
+        "seed": 42,
+        "width": 1328,
+        "height": 1328,
+        "steps": 8,
+        "negative_prompt": "",
+        "batch_size": 1
     }
 }
 
-response = requests.post(url, json=payload)
-print(f"Serverless generation result: {response.json()}")
+response = requests.post(url, json=payload, headers=headers)
+result = response.json()
+
+# Decode base64 image
+image_data = base64.b64decode(result["images"][0]["data"])
+with open("output.png", "wb") as f:
+    f.write(image_data)
 ```
 
-### Deployment Choice Comparison
-| Feature | RunPod Hub | RunPod Serverless |
-|---------|------------|------------------|
-| **Billing** | Per-minute | Per-second |
-| **Cold Start** | 45-60s | 10-20s |
-| **Scaling** | Manual | Auto |
-| **Cost** | Higher uptime | Pay-per-use |
-| **Setup** | One-click | One-click |
+### Simplified API Parameters
 
-### Advanced Configuration
-Modify these parameters in the workflow:
-- **Seed**: Random generation seed
-- **CFG Scale**: Prompt adherence (1.0 for creative freedom)
-- **Steps**: Fixed at 8 for speed
-- **Resolution**: Adjust width/height in EmptySD3LatentImage node
+| Param | Required | Default | Description |
+|-------|----------|---------|-------------|
+| `prompt` | ✅ | — | Text description of the image |
+| `seed` | ❌ | random | Reproducibility seed |
+| `width` | ❌ | 1328 | Image width (up to 4096) |
+| `height` | ❌ | 1328 | Image height (up to 4096) |
+| `steps` | ❌ | 8 | Number of sampling steps (8 for Lightning) |
+| `negative_prompt` | ❌ | "" | What to avoid in generation |
+| `batch_size` | ❌ | 1 | Number of images per request |
+
+### Raw Workflow Mode
+For advanced users, pass a complete ComfyUI API-format workflow:
+```python
+payload = {
+    "input": {
+        "workflow": { ... }  # Full ComfyUI node graph
+    }
+}
+```
 
 ## 💰 Pricing & Deployment Costs
 

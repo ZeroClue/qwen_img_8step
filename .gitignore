@@ -20,3 +20,5 @@ runpod-setup.md
 __pycache__/
 .env
 generate-image.skill
+output/
+image_qwen_Image_2512_api.json
