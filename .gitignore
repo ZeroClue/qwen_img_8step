@@ -11,8 +11,10 @@ docker-compose.yml
 1test_input.json
 .remember/
 runpod-tests.log
+runpod-tests-2.log
 roadmap.md
 .agents/
 .pi/
 skills-lock.json
 runpod-setup.md
+__pycache__/

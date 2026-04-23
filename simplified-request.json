@@ -1,0 +1,11 @@
+{
+  "input": {
+    "prompt": "A cat sitting on a windowsill, warm afternoon sunlight, photorealistic",
+    "seed": 42,
+    "width": 1328,
+    "height": 1328,
+    "steps": 8,
+    "negative_prompt": "",
+    "batch_size": 1
+  }
+}

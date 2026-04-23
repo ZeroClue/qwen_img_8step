@@ -13,6 +13,8 @@ import uuid
 import tempfile
 import socket
 import traceback
+import copy
+import random
 
 # Time to wait between API check attempts in milliseconds
 COMFY_API_AVAILABLE_INTERVAL_MS = 50
@@ -127,6 +129,106 @@ def _attempt_websocket_reconnect(ws_url, max_attempts, delay_s, initial_error):
     )
 
 
+DEFAULT_WORKFLOW = {
+    "3": {
+        "inputs": {
+            "seed": 0,
+            "steps": 8,
+            "cfg": 1,
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "denoise": 1,
+            "model": ["66", 0],
+            "positive": ["6", 0],
+            "negative": ["7", 0],
+            "latent_image": ["58", 0],
+        },
+        "class_type": "KSampler",
+        "_meta": {"title": "KSampler"},
+    },
+    "6": {
+        "inputs": {"text": "", "clip": ["38", 0]},
+        "class_type": "CLIPTextEncode",
+        "_meta": {"title": "CLIP Text Encode (Positive Prompt)"},
+    },
+    "7": {
+        "inputs": {"text": "", "clip": ["38", 0]},
+        "class_type": "CLIPTextEncode",
+        "_meta": {"title": "CLIP Text Encode (Negative Prompt)"},
+    },
+    "8": {
+        "inputs": {"samples": ["3", 0], "vae": ["39", 0]},
+        "class_type": "VAEDecode",
+        "_meta": {"title": "VAEDecode"},
+    },
+    "37": {
+        "inputs": {
+            "unet_name": "qwen_image_fp8_e4m3fn.safetensors",
+            "weight_dtype": "fp8_e4m3fn",
+        },
+        "class_type": "UNETLoader",
+        "_meta": {"title": "UNETLoader"},
+    },
+    "38": {
+        "inputs": {
+            "type": "qwen_image",
+            "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+        },
+        "class_type": "CLIPLoader",
+        "_meta": {"title": "CLIPLoader"},
+    },
+    "39": {
+        "inputs": {"vae_name": "qwen_image_vae.safetensors"},
+        "class_type": "VAELoader",
+        "_meta": {"title": "VAELoader"},
+    },
+    "58": {
+        "inputs": {"width": 1328, "height": 1328, "batch_size": 1},
+        "class_type": "EmptySD3LatentImage",
+        "_meta": {"title": "EmptySD3LatentImage"},
+    },
+    "60": {
+        "inputs": {"filename_prefix": "ComfyUI", "images": ["8", 0]},
+        "class_type": "SaveImage",
+        "_meta": {"title": "SaveImage"},
+    },
+    "66": {
+        "inputs": {"shift": 3.1, "model": ["73", 0]},
+        "class_type": "ModelSamplingAuraFlow",
+        "_meta": {"title": "ModelSamplingAuraFlow"},
+    },
+    "73": {
+        "inputs": {
+            "lora_name": "Qwen-Image-Lightning-8steps-V1.0.safetensors",
+            "model": ["37", 0],
+            "strength_model": 1,
+        },
+        "class_type": "LoraLoaderModelOnly",
+        "_meta": {"title": "LoraLoaderModelOnly"},
+    },
+}
+
+
+def build_workflow(
+    prompt,
+    seed=None,
+    width=1328,
+    height=1328,
+    steps=8,
+    negative_prompt="",
+    batch_size=1,
+):
+    workflow = copy.deepcopy(DEFAULT_WORKFLOW)
+    workflow["6"]["inputs"]["text"] = prompt
+    workflow["7"]["inputs"]["text"] = negative_prompt
+    workflow["3"]["inputs"]["seed"] = seed if seed is not None else random.randint(0, 2**53)
+    workflow["3"]["inputs"]["steps"] = steps
+    workflow["58"]["inputs"]["width"] = width
+    workflow["58"]["inputs"]["height"] = height
+    workflow["58"]["inputs"]["batch_size"] = batch_size
+    return workflow
+
+
 def validate_input(job_input):
     """
     Validates the input for the handler function.
@@ -149,10 +251,26 @@ def validate_input(job_input):
         except json.JSONDecodeError:
             return None, "Invalid JSON format in input"
 
-    # Validate 'workflow' in input
+    # Determine input mode: raw workflow or simplified prompt
     workflow = job_input.get("workflow")
-    if workflow is None:
-        return None, "Missing 'workflow' parameter"
+    prompt = job_input.get("prompt")
+
+    if workflow is not None:
+        pass  # Raw workflow mode — use as-is
+    elif prompt is not None:
+        if not isinstance(prompt, str) or not prompt.strip():
+            return None, "'prompt' must be a non-empty string"
+        workflow = build_workflow(
+            prompt=prompt,
+            seed=job_input.get("seed"),
+            width=job_input.get("width", 1328),
+            height=job_input.get("height", 1328),
+            steps=job_input.get("steps", 8),
+            negative_prompt=job_input.get("negative_prompt", ""),
+            batch_size=job_input.get("batch_size", 1),
+        )
+    else:
+        return None, "Missing 'workflow' or 'prompt' parameter"
 
     # Validate 'images' in input, if provided
     images = job_input.get("images")
@@ -189,8 +307,26 @@ def check_server(url, retries=500, delay=50):
     bool: True if the server is reachable within the given number of retries, otherwise False
     """
 
+    def _comfyui_pid_alive():
+        try:
+            pid_path = "/tmp/comfyui.pid"
+            if os.path.exists(pid_path):
+                with open(pid_path) as f:
+                    pid = int(f.read().strip())
+                os.kill(pid, 0)
+                return True
+        except (ProcessLookupError, ValueError, PermissionError):
+            return False
+        return None  # PID file doesn't exist
+
     print(f"worker-comfyui - Checking API server at {url}...")
     for i in range(retries):
+        # Fail fast if ComfyUI process has died
+        pid_status = _comfyui_pid_alive()
+        if pid_status is False:
+            print(f"worker-comfyui - ComfyUI process (PID file) is dead, aborting.")
+            return False
+
         try:
             response = requests.get(url, timeout=5)
 
