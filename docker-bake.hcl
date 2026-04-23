@@ -14,25 +14,12 @@ variable "COMFYUI_VERSION" {
   default = "latest"
 }
 
-# Global defaults for standard CUDA 12.6.3 images
 variable "BASE_IMAGE" {
-  default = "nvidia/cuda:12.6.3-cudnn-devel-ubuntu22.04"
+  default = "nvidia/cuda:12.6.3-cudnn-runtime-ubuntu24.04"
 }
 
 variable "CUDA_VERSION_FOR_COMFY" {
   default = "12.6"
-}
-
-variable "ENABLE_PYTORCH_UPGRADE" {
-  default = "false"
-}
-
-variable "PYTORCH_INDEX_URL" {
-  default = ""
-}
-
-variable "HUGGINGFACE_ACCESS_TOKEN" {
-  default = ""
 }
 
 variable "COMFY_CUSTOM_NODES" {
@@ -44,7 +31,7 @@ variable "BUILD_VERSION" {
 }
 
 group "default" {
-  targets = ["base", "qwen_image_fp8", "base-cuda12-6-3"]
+  targets = ["base", "qwen_image_fp8"]
 }
 
 target "base" {
@@ -56,9 +43,6 @@ target "base" {
     BASE_IMAGE = "${BASE_IMAGE}"
     COMFYUI_VERSION = "${COMFYUI_VERSION}"
     CUDA_VERSION_FOR_COMFY = "${CUDA_VERSION_FOR_COMFY}"
-    ENABLE_PYTORCH_UPGRADE = "${ENABLE_PYTORCH_UPGRADE}"
-    PYTORCH_INDEX_URL = "${PYTORCH_INDEX_URL}"
-    MODEL_TYPE = "base"
     COMFY_CUSTOM_NODES = "${COMFY_CUSTOM_NODES}"
     BUILD_VERSION = "${BUILD_VERSION}"
   }
@@ -73,31 +57,9 @@ target "qwen_image_fp8" {
     BASE_IMAGE = "${BASE_IMAGE}"
     COMFYUI_VERSION = "${COMFYUI_VERSION}"
     CUDA_VERSION_FOR_COMFY = "${CUDA_VERSION_FOR_COMFY}"
-    ENABLE_PYTORCH_UPGRADE = "${ENABLE_PYTORCH_UPGRADE}"
-    PYTORCH_INDEX_URL = "${PYTORCH_INDEX_URL}"
-    MODEL_TYPE = "qwen_image_fp8"
     COMFY_CUSTOM_NODES = "comfyui-image-saver"
     BUILD_VERSION = "${BUILD_VERSION}"
   }
   tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-qwen_image_fp8"]
   inherits = ["base"]
 }
-
-target "base-cuda12-6-3" {
-  context = "."
-  dockerfile = "Dockerfile"
-  target = "base"
-  platforms = ["linux/amd64"]
-  args = {
-    BASE_IMAGE = "nvidia/cuda:12.6.3-cudnn-devel-ubuntu22.04"
-    COMFYUI_VERSION = "${COMFYUI_VERSION}"
-    CUDA_VERSION_FOR_COMFY = "${CUDA_VERSION_FOR_COMFY}"
-    ENABLE_PYTORCH_UPGRADE = "true"
-    PYTORCH_INDEX_URL = "https://download.pytorch.org/whl/cu126"
-    MODEL_TYPE = "base"
-    COMFY_CUSTOM_NODES = "${COMFY_CUSTOM_NODES}"
-    BUILD_VERSION = "${BUILD_VERSION}"
-  }
-  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-base-cuda12.6.3"]
-}
-

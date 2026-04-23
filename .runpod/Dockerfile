@@ -1,22 +1,21 @@
-# Build argument for base image selection (used by build stage only)
-ARG BASE_IMAGE=nvidia/cuda:12.6.3-cudnn-devel-ubuntu22.04
+# Build argument for base image selection
+ARG BASE_IMAGE=nvidia/cuda:12.6.3-cudnn-runtime-ubuntu24.04
 
-# Stage 1: Build — install everything using the devel image
-FROM ${BASE_IMAGE} AS build
+# Stage 1: Base image with all dependencies
+FROM ${BASE_IMAGE} AS base
 
 ARG COMFYUI_VERSION=latest
 ARG CUDA_VERSION_FOR_COMFY
 ARG COMFY_CUSTOM_NODES=comfyui-image-saver
+ARG BUILD_VERSION=dev
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PIP_PREFER_BINARY=1
 ENV PYTHONUNBUFFERED=1
 ENV CMAKE_BUILD_PARALLEL_LEVEL=8
 
-# Install Python 3.12 and build tools
-RUN apt-get update && apt-get install -y software-properties-common \
-    && add-apt-repository -y ppa:deadsnakes/ppa \
-    && apt-get update && apt-get install -y \
+# Install Python 3.12 (native in Ubuntu 24.04), git, and runtime libs
+RUN apt-get update && apt-get install -y \
     python3.12 \
     python3.12-venv \
     git \
@@ -29,6 +28,9 @@ RUN apt-get update && apt-get install -y software-properties-common \
     ffmpeg \
     && ln -sf /usr/bin/python3.12 /usr/bin/python \
     && ln -sf /usr/bin/pip3 /usr/bin/pip
+
+# Clean up to reduce image size
+RUN apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Install uv and create venv
 RUN wget -qO- https://astral.sh/uv/install.sh | sh \
@@ -51,7 +53,7 @@ RUN if [ -n "${CUDA_VERSION_FOR_COMFY}" ]; then \
 # Install ComfyUI runtime requirements
 RUN uv pip install -r /comfyui/requirements.txt
 
-# Upgrade PyTorch for CUDA 12.6+ compatibility
+# Force-install PyTorch cu126 for forward compatibility with CUDA 12.7/12.8 drivers
 RUN uv pip install --force-reinstall torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
 
 # Support for the network volume
@@ -76,40 +78,9 @@ RUN if [ -n "${COMFY_CUSTOM_NODES}" ]; then \
       echo "No custom ComfyUI nodes to install"; \
     fi
 
-# Stage 2: Base runtime — minimal image with only runtime deps
-FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04 AS base
-
-ARG BUILD_VERSION=dev
-
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONUNBUFFERED=1
-
-# Install Python 3.12 (venv symlinks to /usr/bin/python3.12) and runtime libs only
-RUN apt-get update && apt-get install -y software-properties-common \
-    && add-apt-repository -y ppa:deadsnakes/ppa \
-    && apt-get update && apt-get install -y \
-    python3.12 \
-    git \
-    wget \
-    libgl1 \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender1 \
-    ffmpeg \
-    && ln -sf /usr/bin/python3.12 /usr/bin/python \
-    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
-
-# Copy built Python environment and ComfyUI from build stage
-COPY --from=build /opt/venv /opt/venv
-COPY --from=build /comfyui /comfyui
-
-# Use the virtual environment
-ENV PATH="/opt/venv/bin:${PATH}"
-
 WORKDIR /comfyui
 
-# Copy helper scripts
+# Copy helper script to switch Manager network mode at container start
 COPY scripts/comfy-manager-set-mode.sh /usr/local/bin/comfy-manager-set-mode
 RUN chmod +x /usr/local/bin/comfy-manager-set-mode
 
@@ -130,7 +101,7 @@ ENV BUILD_VERSION=${BUILD_VERSION}
 
 CMD ["/start.sh"]
 
-# Stage 3: Final image
+# Stage 2: Final image (models download at runtime)
 FROM base AS final
 
 # Models are downloaded at runtime with hf_xet acceleration (see check-models.sh)
