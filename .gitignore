@@ -21,4 +21,5 @@ __pycache__/
 .env
 generate-image.skill
 output/
+tmp/
 image_qwen_Image_2512_api.json

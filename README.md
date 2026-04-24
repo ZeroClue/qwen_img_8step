@@ -1,3 +1,5 @@
+[![Runpod](https://api.runpod.io/badge/ZeroClue/qwen-img-8step)](https://console.runpod.io/hub/ZeroClue/qwen-img-8step) [![Sign Up](https://img.shields.io/badge/RunPod-Sign%20Up-blue)](https://runpod.io?ref=lnnwdl3q)
+
 # Qwen Image 8-Step Generation
 
 🚀 **Ultra-fast AI image generation in just 8 steps** - Generate high-quality 1328×1328 images in 2-4 seconds using Qwen Vision-Language models with Lightning optimization.

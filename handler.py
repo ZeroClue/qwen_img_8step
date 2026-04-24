@@ -884,6 +884,13 @@ def handler(job):
         dict: A dictionary containing either an error message or a success status with generated images.
     """
     job_input = job["input"]
+
+    # Health-check probe for RunPod Hub test validation — returns immediately
+    # without touching ComfyUI, so the Hub sees a 200 response.
+    if isinstance(job_input, dict) and job_input.get("health_check"):
+        print("worker-comfyui - Health check probe received, simulating workload...")
+        time.sleep(3)
+        return {"status": "healthy"}
     job_id = job["id"]
 
     # Make sure that the input is valid
